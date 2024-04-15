@@ -21,15 +21,24 @@ close all
 
 %Step 3: Removing Non-Stationarity
     data1 = diff(T.logClose);
-    %T.CloseDiff = zeros(size,1);
-    %T.CloseDiff(2:end) = data1;
-    T.CloseDiff = T.Close;
+    T.CloseDiff = zeros(size,1);
+    T.CloseDiff(2:end) = diff(T.Close);
+    T.logCloseDiff = zeros(size,1);
+    T.logCloseDiff(2:end) = data1;
+    logCloseDiff = T.logCloseDiff;
+
+    %Step 2: Checking For Stationarity - Augmented DF Test
+    [h1, pvalue1, stat1, cValue1] = adftest(data1);
+    disp('new h value is:'); disp(h1);
+    % The result h = 1 indicates that this test 
+    % rejects the null hypothesis of a unit root 
+    % against the autoregressive alternative.
 
 %Step 4: Getting ACF and PACF
     % Using econometricModeler app, PACF lags = 1, ACF lags = 47
 
 %Step 5: Create Model For Estimation
-    Md1 = arima(10,1,3);
+    Md1 = arima(3,1,3);
     Md1.SeriesName= "logClose";
 
 %Step 6: Partiton Data
@@ -42,19 +51,19 @@ close all
     tail(resdt);
     resdtt = T.logClose(1:numTrain, :) - resdt.logClose_Residual;
     tail(resdtt);
-    plot(T.Time(1:numTrain, :), T.logClose(1:numTrain, :), T.Time(1:numTrain, :), resdtt); 
+    plot(T.Time(1:numTrain), T.logClose(1:numTrain), T.Time(1:numTrain), resdtt); 
     ylabel 'Log of closing price'; xlabel 'Time'; title 'ARIMA fitting';
     hold on
     %disp(T);
 %%
 %Forecast for 15 days
-    [dataForecasted] = forecast(EstMd1, numTest, T(1:numTrain, :));
+    [dataForecasted] = forecast(EstMd1, numTest+1, T(1:numTrain, :));
 
 %Plot Difference
-    actual = T.logClose(numTrain+1, :);
+    actual = T.logClose(numTrain:end);
     p1 = plot(T.Time, T.logClose); hold on
     result = dataForecasted.logClose_Response;
-    p2 = plot(T.Time(numTrain+1:end), result, LineWidth=1.5);
+    p2 = plot(T.Time(numTrain:end), result, LineWidth=1.5);
     grid on
     hold on
 
@@ -65,7 +74,7 @@ close all
 %Plot 95% Confidence Interval
     lower = dataForecasted.logClose_Response - 1.96*sqrt(dataForecasted.logClose_MSE);
     upper = dataForecasted.logClose_Response + 1.96*sqrt(dataForecasted.logClose_MSE);
-    p3 = plot(T.Time(numTrain+1:end), [lower, upper], LineStyle="--", LineWidth=2);
+    p3 = plot(T.Time(numTrain:end), [lower, upper], LineStyle="--", LineWidth=2);
     legend([p1, p2, p3(1)], "Observations", "Predicted", "95% confidence interval", Location="best");
 
     
