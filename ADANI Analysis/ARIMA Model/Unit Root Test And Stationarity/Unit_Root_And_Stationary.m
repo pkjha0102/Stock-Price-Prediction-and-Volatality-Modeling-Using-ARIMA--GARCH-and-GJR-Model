@@ -9,6 +9,10 @@ close all
     logData = T.logClose;
     time = T.Time;
     size = height(data);
+    T.Return = zeros(size, 1);
+    T.Return(2:end, :) = diff(T.Close)./T.Close(1:end-1,:) * 100;
+    T.logReturn = zeros(size, 1);
+    T.logReturn(2:end) = diff(T.logClose) * 100;
     %disp(data(1:10));
     %plot(data); title("SBI daily closing prices fron march 4, 2023 to march 4, 2024
 

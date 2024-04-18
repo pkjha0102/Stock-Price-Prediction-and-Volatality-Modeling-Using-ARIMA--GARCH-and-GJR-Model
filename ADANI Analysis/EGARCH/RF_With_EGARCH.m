@@ -32,9 +32,14 @@ subplot(2,1,2), plot(T.Dir);
 %Step 3 : Training and Testing Model
 numTrain = 145;
 numTest = size - numTrain;
-
-model = fitensemble(T(1:numTrain, 1:end-1), T(1:numTrain, end),'Bag',100,'Tree','Type','classification');
-logicalPredict = predict(model,T(numTrain+1:end, 1:end-1));
+logicalPredict = zeros(numTest, 1);
+window = numTrain;
+for i = 1:numTest
+    model = fitensemble(T(1:window, 2:end-1), T(1:window, end),'Bag',100,'Tree','Type','classification');
+    logicalPredict(i) = predict(model,T(window+1, 2:end-1));
+    window = window + 1;
+    start = start + 1;
+end
 disp(logicalPredict);
 disp(T.Dir(numTrain+1:end));
 figure
@@ -65,7 +70,7 @@ h2 = lbqtest(res_sqr);
 disp(h1); disp(h2);
 
 numPredict = 12;
-Mdl = egarch(6,29);
+Mdl = egarch(4,29);
 %Mdl.SeriesName = "Return";
 EMdl = estimate(Mdl, T.Return(1:numTrain));
 out = infer(EMdl, T.Return(1:numTrain));
@@ -79,7 +84,7 @@ disp(result);
 Err_outSample = rmse(result, res_sqr(numTrain+1:numTrain+numPredict));
 plot(numTrain:numTrain+numPredict-1, result, LineWidth=2);
 legend ('Actual Volatility', 'Modelled Volatility', 'Predicted Volatility', Location='best');
-title 'Volatility Using EGARCH(6,29)';
+title 'Volatility Using EGARCH(4,29)';
 hold off
 
 %%
@@ -90,15 +95,17 @@ for i = 1:numPredict
         dirPredict(i) = -1;
     end
 end
-for i = 1:numPredict
-    retPredicted(i) = Mean(i+numTrain) + dirPredict(i) * sqrt(exp(result(i)));
+rootResult = sqrt(result);
+for i = 1:numPredict-1
+    retPredicted(i) = Mean(i+numTrain) + dirPredict(i) * sqrt(result(i+1));
 end
 
+figure
 plot(T.Time(1:end), T.Return(1:end)); 
 hold on
 plot(numTrain+1:numTrain+numPredict, retPredicted, LineWidth=2)
 ylabel 'Return'; xlabel 'Time'; title 'Return Prediction';
-title 'Return Prediction with RF and EGARCH(6,29) --> RMSE = 17.2013';
+title 'Return Prediction with RF and EGARCH(4,29) --> RMSE = 15.0236';
 
 RMSE = rmse(retPredicted, T.Return(numTrain+1:numTrain+numPredict));
 disp(RMSE);

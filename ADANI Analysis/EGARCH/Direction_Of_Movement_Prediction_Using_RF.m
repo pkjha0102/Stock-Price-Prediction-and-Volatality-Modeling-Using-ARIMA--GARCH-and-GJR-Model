@@ -31,7 +31,7 @@ numTrain = 143;
 numTest = size - numTrain;
 
 model = fitensemble(T(1:numTrain, 1:end-1), T(1:numTrain, end),'Bag',100,'Tree','Type','classification');
-prediction = predict(model,T(numTrain+1:end, 1:end-1));
+prediction = predict(model,T(numTrain+1:end, 1));
 disp(prediction);
 disp(T.Dir(numTrain+1:end));
 plot(abs(T.Dir(numTrain+1:end) - prediction));
